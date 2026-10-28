@@ -1,1 +1,0 @@
--keep class info.mqtt.android.service.** { *;}
