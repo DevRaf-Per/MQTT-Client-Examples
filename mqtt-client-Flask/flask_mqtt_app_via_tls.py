@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import ssl
@@ -6,17 +5,21 @@ import ssl
 from flask import Flask
 from flask_mqtt import Mqtt
 
+from logger_setup import get_logger
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+logger = get_logger()
 
 app = Flask(__name__)
 
 # MQTT Configuration
 app.config['MQTT_BROKER_URL'] = 'broker.emqx.io'  # MQTT Broker URL
-app.config['MQTT_BROKER_PORT'] = 8883  # MQTT Broker Port
 app.config['MQTT_USERNAME'] = 'emqx'  # MQTT Username
 app.config['MQTT_PASSWORD'] = 'public'  # MQTT Password
+# app.config['MQTT_BROKER_URL'] = "localhost"  # MQTT Broker URL
+# app.config['MQTT_USERNAME'] = "sntest"  # MQTT Username
+# app.config['MQTT_PASSWORD'] = "testpassword1"  # MQTT Password
+
+app.config['MQTT_BROKER_PORT'] = 8883  # MQTT Broker Port
 app.config['MQTT_TOPIC'] = 'emqx/flask'  # MQTT Topic
 app.config['MQTT_KEEPALIVE'] = 60  # MQTT KeepAlive Interval
 app.config['MQTT_RECONNECT_DELAY'] = 3  # MQTT Reconnect Interval
@@ -33,14 +36,14 @@ mqtt = Mqtt()
 
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc: int) -> None:
-    logging.info(f'Connected with result code {rc}')
+    logger.info(f'Connected with result code {rc}')
     topic = app.config['MQTT_TOPIC']
     mqtt.subscribe(topic)  # Replace with your MQTT topic
 
 
 @mqtt.on_message()
 def handle_message(client, userdata, message) -> None:
-    logging.info(f'Received message: {message.payload.decode()} on topic {message.topic}')
+    logger.info(f'Received message: {message.payload.decode()} on topic {message.topic}')
     # Here you can add logic to handle the message
 
 
