@@ -19,3 +19,7 @@ message_log.db
 client.crt
 client.key
 server-ca.crt
+
+logs
+
+**/logs/**
