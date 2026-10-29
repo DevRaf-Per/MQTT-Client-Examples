@@ -1,12 +1,11 @@
-# python 3.x
-
 import datetime
 import json
 import random
 import sqlite3 as db
-# import duckdb as db
 
+# import duckdb as db
 from paho.mqtt import client as mqtt_client
+from paho.mqtt.enums import CallbackAPIVersion
 
 BROKER = 'broker.emqx.io'
 PORT = 8883
@@ -15,7 +14,7 @@ TOPIC = "python-mqtt/tls"
 CLIENT_ID = f'python-mqtt-tls-sub-{random.randint(0, 1000)}'
 USERNAME = 'emqx'
 PASSWORD = 'public'
-CA_CERTS = './broker.emqx.io-ca.crt'
+CA_CERTS = './certs/broker.emqx.io-ca.crt'
 
 TABLE_NAME = 'message'
 # create connection to sqlite database
@@ -40,25 +39,26 @@ def save_message(publish_at, client_id, topic, payload=None, db_conn=conn):
     cursor = conn.cursor()
     try:
         cols, vals = [], []
-        data = json.loads(payload)
-        for key, val in data.items():
-            column = f'{key}'.replace(' ', '_')
-            cursor.execute(f'PRAGMA table_info({TABLE_NAME})')
-            columns = cursor.fetchall()
-            # add column if not exist
-            if not any(column in col for col in columns):
-                cursor.execute(f'ALTER TABLE {TABLE_NAME} ADD COLUMN {quote_identifier(column)} VARCHAR')
-            cols.append(quote_identifier(column))
-            vals.append(f'{val}')
-        # insert message data into sqlite database
-        placeholders = ','.join('?' for _ in cols)
-        cursor.execute(f'''
-            INSERT INTO {TABLE_NAME} (publishAt, clientId, topic, {','.join(cols)})
-            VALUES (?, ?, ?, {placeholders})
-            ''', (publish_at, client_id, topic, *vals))
+        if payload:
+            data = json.loads(payload)
+            for key, val in data.items():
+                column = f'{key}'.replace(' ', '_')
+                cursor.execute(f'PRAGMA table_info({TABLE_NAME})')
+                columns = cursor.fetchall()
+                # add column if not exist
+                if not any(column in col for col in columns):
+                    cursor.execute(f'ALTER TABLE {TABLE_NAME} ADD COLUMN {quote_identifier(column)} VARCHAR')
+                cols.append(quote_identifier(column))
+                vals.append(f'{val}')
+            # insert message data into sqlite database
+            placeholders = ','.join('?' for _ in cols)
+            cursor.execute(f'''
+                INSERT INTO {TABLE_NAME} (publishAt, clientId, topic, {','.join(cols)})
+                VALUES (?, ?, ?, {placeholders})
+                ''', (publish_at, client_id, topic, *vals))
 
-        conn.commit()
-        print("Saved message successfully!")
+            conn.commit()
+            print("Saved message successfully!")
     except db.Error as e:
         print("Failed to save message.", e)
 
@@ -83,7 +83,7 @@ def on_message(client, userdata, msg):
 
 
 def connect_mqtt():
-    client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1, CLIENT_ID)
+    client = mqtt_client.Client(CallbackAPIVersion.VERSION1, CLIENT_ID)
     client.tls_set(ca_certs=CA_CERTS)
     client.username_pw_set(USERNAME, PASSWORD)
     client.on_connect = on_connect

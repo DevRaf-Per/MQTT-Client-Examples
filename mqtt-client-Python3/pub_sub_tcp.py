@@ -9,16 +9,17 @@ from logger_setup import get_logger
 
 logger = get_logger()
 
-# BROKER = "broker.emqx.io"
-BROKER = "localhost"
+BROKER = "broker.emqx.io"
+# BROKER = "localhost"
 PORT = 1883
-TOPIC = "python-mqtt/tcp"
+# TOPIC = "python-mqtt/tcp"
+TOPIC = "python-mqtt/tls"
 # generate client ID with pub prefix randomly
 CLIENT_ID = f"python-mqtt-tcp-pub-sub-{random.randint(1000,9999)}"
-# USERNAME = "emqx"
-# PASSWORD = "public"
-USERNAME = "sntest"
-PASSWORD = "testpassword1"
+USERNAME = "emqx"
+PASSWORD = "public"
+# USERNAME = "sntest"
+# PASSWORD = "testpassword1"
 
 FIRST_RECONNECT_DELAY = 1
 RECONNECT_RATE = 2
